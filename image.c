@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
+#include <pthread.h>
 #include "image.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -9,6 +10,8 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+void *convolute_loop(Image* srcImage,Image* destImage,Matrix algorithm, int local_start, int local_end);
 
 //An array of kernel matrices to be used for image convolution.  
 //The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box blur.
@@ -68,6 +71,64 @@ void convolute(Image* srcImage,Image* destImage,Matrix algorithm){
     }
 }
 
+
+void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
+    //int row,pix,bit,span;
+    //span=srcImage->bpp*srcImage->bpp;
+
+
+    int imgR = srcImage->height;
+    //int imgPix = srcImage->width;
+    //int imgBit = srcImage->bpp;
+    /* ******************************************* */
+
+    printf("total rows = %d\n", imgR);
+
+    int local_start = 0;
+    int rows_per_thread = 15;
+    int thread_count = 50;
+    int local_end = local_start + rows_per_thread;
+
+    pthread_t *threads = (pthread_t* )malloc(thread_count * sizeof(pthread_t));
+
+    for (int i = 0; i < thread_count; i++){
+
+        printf("Before Thread\n");
+        pthread_create(&threads[i], NULL, convolute_loop(srcImage, destImage,algorithm, local_start, local_end), NULL);
+        local_end = local_end + rows_per_thread;
+        local_start = local_start + rows_per_thread;
+    }
+
+    printf("Joining threads\n");
+    for (int k = 0; k < thread_count; k++){
+
+        pthread_join(&threads[k], NULL);
+
+    }
+    //pthread_join(thread_id, NULL);
+
+}
+
+
+void *convolute_loop(Image* srcImage,Image* destImage,Matrix algorithm, int local_start, int local_end){
+    int row,pix,bit,span;
+    span=srcImage->bpp*srcImage->bpp;
+
+    /* Need to split up the work among each thread */    
+
+    printf("After Thread Launch\n");
+
+    printf("local_start=%d local_end=%d\n", local_start, local_end);
+    for (row=local_start;row<local_end;row++){
+        for (pix=0;pix<srcImage->width;pix++){
+            for (bit=0;bit<srcImage->bpp;bit++){
+                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
+            }
+        }
+    }
+}
+
+
 //Usage: Prints usage information for the program
 //Returns: -1
 int Usage(){
@@ -111,7 +172,13 @@ int main(int argc,char** argv){
     destImage.height=srcImage.height;
     destImage.width=srcImage.width;
     destImage.data=malloc(sizeof(uint8_t)*destImage.width*destImage.bpp*destImage.height);
-    convolute(&srcImage,&destImage,algorithms[type]);
+
+    /* */ 
+
+ 
+    convolute_bak(&srcImage,&destImage,algorithms[type]);
+    
+    /* */
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     stbi_image_free(srcImage.data);
     
