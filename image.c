@@ -11,7 +11,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-void *convolute_loop(Image* srcImage,Image* destImage,Matrix algorithm, int local_start, int local_end);
+void *convolute_loop(void* image_args);
 
 //An array of kernel matrices to be used for image convolution.  
 //The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box blur.
@@ -33,6 +33,7 @@ Matrix algorithms[]={
 //          algorithm: The 3x3 kernel matrix to use for the convolution
 //Returns: The new value for this x,y pixel and bit channel
 uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
+    //printf("Entered getPixelValue\n");
     int px,mx,py,my,i,span;
     span=srcImage->width*srcImage->bpp;
     // for the edge pixes, just reuse the edge pixel
@@ -51,6 +52,7 @@ uint8_t getPixelValue(Image* srcImage,int x,int y,int bit,Matrix algorithm){
         algorithm[2][0]*srcImage->data[Index(mx,py,srcImage->width,bit,srcImage->bpp)]+
         algorithm[2][1]*srcImage->data[Index(x,py,srcImage->width,bit,srcImage->bpp)]+
         algorithm[2][2]*srcImage->data[Index(px,py,srcImage->width,bit,srcImage->bpp)];
+    //printf("returning %d\n", result);
     return result;
 }
 
@@ -77,55 +79,84 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
     //span=srcImage->bpp*srcImage->bpp;
 
 
-    int imgR = srcImage->height;
-    //int imgPix = srcImage->width;
-    //int imgBit = srcImage->bpp;
+
     /* ******************************************* */
 
-    printf("total rows = %d\n", imgR);
+    //printf("Image info: srcImage->height=%d srcImage->width=%d srcImage->bpp=%d\n", imgR, imgPix, imgBit);
 
-    int local_start = 0;
-    int rows_per_thread = 15;
+    //printf("total rows = %d\n", imgR);
+
     int thread_count = 50;
-    int local_end = local_start + rows_per_thread;
+    printf("total threads = %d\n", thread_count);
+    int rows_per_thread = srcImage->height / thread_count;
+    int leftover = srcImage->height % thread_count;
+    printf("rows_per_thread = %d, leftover = %d\n", rows_per_thread, leftover);
+    printf("----------------------------------\n");
+
+
+    struct ImageArgs *void_args = (struct ImageArgs*) malloc(sizeof(struct ImageArgs));
+    void_args->srcImage = srcImage;
+    void_args->destImage = destImage;
+    void_args->algorithm = (&algorithm);
+    void_args->local_start = 0;
+    void_args->local_end = void_args->local_start + rows_per_thread;
+
 
     pthread_t *threads = (pthread_t* )malloc(thread_count * sizeof(pthread_t));
 
     for (int i = 0; i < thread_count; i++){
 
-        printf("Before Thread\n");
-        pthread_create(&threads[i], NULL, convolute_loop(srcImage, destImage,algorithm, local_start, local_end), NULL);
-        local_end = local_end + rows_per_thread;
-        local_start = local_start + rows_per_thread;
+        printf("Spawning thread %d\n", i);
+        pthread_create(&threads[i], NULL, convolute_loop, (void*)&void_args);
+        printf("--------- After pthread_create ---------\n");
+        void_args->local_end = void_args->local_end + rows_per_thread;
+        void_args->local_start = void_args->local_start + rows_per_thread;
     }
 
     printf("Joining threads\n");
     for (int k = 0; k < thread_count; k++){
 
-        pthread_join(&threads[k], NULL);
+        pthread_join(threads[k], NULL);
 
     }
-    //pthread_join(thread_id, NULL);
-
+    printf("Freeing threads\n");
+    free(threads);
 }
 
 
-void *convolute_loop(Image* srcImage,Image* destImage,Matrix algorithm, int local_start, int local_end){
+void* convolute_loop(void* img_args){
+
     int row,pix,bit,span;
-    span=srcImage->bpp*srcImage->bpp;
+
+    struct ImageArgs *args;
+    args = (struct ImageArgs*) img_args;
+
+    span=args->srcImage->bpp*args->srcImage->bpp;
+
+    int imgR = args->srcImage->height;
+    int imgPix = args->srcImage->width;
+    int imgBit = args->srcImage->bpp;
 
     /* Need to split up the work among each thread */    
 
     printf("After Thread Launch\n");
 
-    printf("local_start=%d local_end=%d\n", local_start, local_end);
+    int local_start = args->local_start;
+    int local_end = args->local_end;
+
+    printf("local_start=%d local_end=%d (exclusive)\n", local_start, local_end);
     for (row=local_start;row<local_end;row++){
-        for (pix=0;pix<srcImage->width;pix++){
-            for (bit=0;bit<srcImage->bpp;bit++){
-                destImage->data[Index(pix,row,srcImage->width,bit,srcImage->bpp)]=getPixelValue(srcImage,pix,row,bit,algorithm);
+        //printf("Row = %d\n", row);
+        for (pix=0;pix<imgPix;pix++){
+            for (bit=0;bit<imgBit;bit++){
+                //printf("bit= %d row= %d pix= %d\n", bit, row, pix);
+                //printf("Working on pixel\n");
+
+                args->destImage->data[Index(pix,row,imgPix,bit,imgBit)]=getPixelValue(args->srcImage,pix,row,bit,args->algorithm);
             }
         }
     }
+    return 0;
 }
 
 
