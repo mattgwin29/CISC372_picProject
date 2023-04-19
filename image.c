@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <string.h>
+#include <omp.h>
 #include "image.h"
 
 #define STB_IMAGE_IMPLEMENTATION
