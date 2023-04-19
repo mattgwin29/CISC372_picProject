@@ -120,16 +120,6 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
         
     }
 
-    /*if (leftover > 0){
-        printf("Reached here\n");
-        printf("void_args->local_start = %d\n", void_args->local_start + leftover);
-        void_args->local_start = void_args->local_start + leftover;
-        printf("void_args->local_end = %d\n", void_args->local_end + leftover);
-        void_args->local_end = void_args->local_end + leftover;
-        printf("Spawning extra thread to handle the last %d rows\n", leftover);
-        //pthread_create(&extra, NULL, convolute_loop, (void*)void_args); 
-
-    }*/
 
     printf("Joining threads\n");
     for (int k = 0; k < thread_count; k++){
@@ -137,11 +127,6 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
         pthread_join(threads[k], NULL);
 
     }
-    /*if (leftover > 0){
-        pthread_join(extra, NULL);
-    }
-    printf("Freeing threads\n");
-    free(threads);*/
 }
 
 
