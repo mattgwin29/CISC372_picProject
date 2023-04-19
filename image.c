@@ -154,11 +154,11 @@ void* convolute_loop(void* img_args){
 
     local_start = (args->rank * rows_per_thread); 
     if (args->rank == args->total_threads-1){
-        printf("INSIDE CONDITION %d * %d + %d\n", args->rank+1, rows_per_thread, leftover);
+        //printf("INSIDE CONDITION %d * %d + %d\n", args->rank+1, rows_per_thread, leftover);
         local_end = args->srcImage->height;
-        printf("###########################################\n");
-        printf("Setting last to %d\n", local_end);
-        printf("###########################################\n");
+        //printf("###########################################\n");
+        //printf("Setting last to %d\n", local_end);
+        //printf("###########################################\n");
     }
     else {
         local_end = (args->rank+1) * rows_per_thread;       
@@ -228,13 +228,16 @@ int main(int argc,char** argv){
 
  
     convolute_bak(&srcImage,&destImage,algorithms[type]);
+    t2=time(NULL);
+    printf("Parallel Took %ld seconds\n",t2-t1);
     
     /* */
+    printf("Writing Image...\n");
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     stbi_image_free(srcImage.data);
     
     free(destImage.data);
-    t2=time(NULL);
-    printf("Took %ld seconds\n",t2-t1);
+    //=time(NULL);
+    //printf("Writing Took %ld seconds\n",t2-t1);
    return 0;
 }
