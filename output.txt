@@ -1,0 +1,67 @@
+Script started on Wed Apr 19 19:46:01 2023
+[mattgwin@r1n00 CISC372_picProject]$ ./image pic1.jpg edge
+total threads = 50
+thread: 1 local_start=60 local_end=120 (exclusive)
+thread: 7 local_start=420 local_end=480 (exclusive)
+thread: 2 local_start=120 local_end=180 (exclusive)
+thread: 4 local_start=240 local_end=300 (exclusive)
+thread: 3 local_start=180 local_end=240 (exclusive)
+thread: 5 local_start=300 local_end=360 (exclusive)
+thread: 6 local_start=360 local_end=420 (exclusive)
+thread: 9 local_start=540 local_end=600 (exclusive)
+thread: 0 local_start=0 local_end=60 (exclusive)
+thread: 8 local_start=480 local_end=540 (exclusive)
+Joining threads
+thread: 46 local_start=2760 local_end=2820 (exclusive)
+thread: 47 local_start=2820 local_end=2880 (exclusive)
+thread: 48 local_start=2880 local_end=2940 (exclusive)
+thread: 49 local_start=2940 local_end=3024 (exclusive)
+thread: 11 local_start=660 local_end=720 (exclusive)
+thread: 12 local_start=720 local_end=780 (exclusive)
+thread: 13 local_start=780 local_end=840 (exclusive)
+thread: 14 local_start=840 local_end=900 (exclusive)
+thread: 15 local_start=900 local_end=960 (exclusive)
+thread: 16 local_start=960 local_end=1020 (exclusive)
+thread: 17 local_start=1020 local_end=1080 (exclusive)
+thread: 10 local_start=600 local_end=660 (exclusive)
+thread: 38 local_start=2280 local_end=2340 (exclusive)
+thread: 39 local_start=2340 local_end=2400 (exclusive)
+thread: 40 local_start=2400 local_end=2460 (exclusive)
+thread: 41 local_start=2460 local_end=2520 (exclusive)
+thread: 42 local_start=2520 local_end=2580 (exclusive)
+thread: 43 local_start=2580 local_end=2640 (exclusive)
+thread: 44 local_start=2640 local_end=2700 (exclusive)
+thread: 45 local_start=2700 local_end=2760 (exclusive)
+thread: 31 local_start=1860 local_end=1920 (exclusive)
+thread: 32 local_start=1920 local_end=1980 (exclusive)
+thread: 33 local_start=1980 local_end=2040 (exclusive)
+thread: 34 local_start=2040 local_end=2100 (exclusive)
+thread: 35 local_start=2100 local_end=2160 (exclusive)
+thread: 36 local_start=2160 local_end=2220 (exclusive)
+thread: 37 local_start=2220 local_end=2280 (exclusive)
+thread: 26 local_start=1560 local_end=1620 (exclusive)
+thread: 27 local_start=1620 local_end=1680 (exclusive)
+thread: 28 local_start=1680 local_end=1740 (exclusive)
+thread: 29 local_start=1740 local_end=1800 (exclusive)
+thread: 30 local_start=1800 local_end=1860 (exclusive)
+thread: 22 local_start=1320 local_end=1380 (exclusive)
+thread: 23 local_start=1380 local_end=1440 (exclusive)
+thread: 24 local_start=1440 local_end=1500 (exclusive)
+thread: 25 local_start=1500 local_end=1560 (exclusive)
+thread: 20 local_start=1200 local_end=1260 (exclusive)
+thread: 21 local_start=1260 local_end=1320 (exclusive)
+thread: 19 local_start=1140 local_end=1200 (exclusive)
+thread: 18 local_start=1080 local_end=1140 (exclusive)
+Parallel Took 1 seconds
+Writing Image...
+]0;mattgwin@r1n00.darwin:~/CISC372_picProject[mattgwin@r1n00 CISC372_picProject]$ ./image pic1.jpg edgegcc image.c -o image -fopenmp -lm -std=c99
+[mattgwin@r1n00 CISC372_picProject]$ g[23Pit checkout openMP
+Switched to branch 'openMP'
+]0;mattgwin@r1n00.darwin:~/CISC372_picProject[mattgwin@r1n00 CISC372_picProject]$ git checkout openMP./image pic1.jpg edgegcc image.c -o image -fopenmp -lm -std=c99
+[mattgwin@r1n00 CISC372_picProject]$ g[23Pit checkout openMPcc image.c -o image -fopenmp -lm -std=c99
+]0;mattgwin@r1n00.darwin:~/CISC372_picProject[mattgwin@r1n00 CISC372_picProject]$ gcc image.c -o image -fopenmp -lm -std=c99
+[mattgwin@r1n00 CISC372_picProject]$ g[23Pit checkout openMP./image pic1.jpg edge
+Took 1 seconds
+]0;mattgwin@r1n00.darwin:~/CISC372_picProject[mattgwin@r1n00 CISC372_picProject]$ exit
+
+Script done on Wed Apr 19 19:47:13 2023
