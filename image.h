@@ -26,6 +26,7 @@ typedef struct ImageArgs{
     Image* srcImage;
     Image* destImage;
     //Matrix* algorithm; 
+    int rank;
     int local_start;
     int local_end;
 } ImageArgs;
