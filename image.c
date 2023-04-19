@@ -113,11 +113,11 @@ int main(int argc,char** argv){
     destImage.width=srcImage.width;
     destImage.data=malloc(sizeof(uint8_t)*destImage.width*destImage.bpp*destImage.height);
     convolute(&srcImage,&destImage,algorithms[type]);
+    t2=time(NULL);
+    printf("Took %ld seconds\n",t2-t1);
     stbi_write_png("output.png",destImage.width,destImage.height,destImage.bpp,destImage.data,destImage.bpp*destImage.width);
     stbi_image_free(srcImage.data);
     
     free(destImage.data);
-    t2=time(NULL);
-    printf("Took %ld seconds\n",t2-t1);
-   return 0;
+    return 0;
 }
