@@ -179,7 +179,6 @@ void* convolute_loop(void* img_args){
         local_end = (args->rank+1) * rows_per_thread;       
     }
 
-    //printf("AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHhh\n");
     printf("thread: %d local_start=%d local_end=%d (exclusive)\n", args->rank, local_start, local_end);
     for (row=local_start;row<local_end;row++){
         //printf("Row = %d\n", row);
