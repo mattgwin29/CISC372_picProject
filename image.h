@@ -25,7 +25,7 @@ enum KernelTypes GetKernelType(char* type);
 typedef struct ImageArgs{
     Image* srcImage;
     Image* destImage;
-    Matrix** algorithm; 
+    //Matrix* algorithm; 
     int local_start;
     int local_end;
 } ImageArgs;

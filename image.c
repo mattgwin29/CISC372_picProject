@@ -11,6 +11,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+enum KernelTypes type;
+
 void *convolute_loop(void* image_args);
 
 //An array of kernel matrices to be used for image convolution.  
@@ -90,27 +92,45 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
     printf("total threads = %d\n", thread_count);
     int rows_per_thread = srcImage->height / thread_count;
     int leftover = srcImage->height % thread_count;
-    printf("rows_per_thread = %d, leftover = %d\n", rows_per_thread, leftover);
-    printf("----------------------------------\n");
+    //printf("rows_per_thread = %d, leftover = %d\n", rows_per_thread, leftover);
+    //printf("----------------------------------\n");
 
 
     struct ImageArgs *void_args = (struct ImageArgs*) malloc(sizeof(struct ImageArgs));
     void_args->srcImage = srcImage;
     void_args->destImage = destImage;
-    void_args->algorithm = (&algorithm);
+    //void_args->algorithm = (&algorithm);
     void_args->local_start = 0;
     void_args->local_end = void_args->local_start + rows_per_thread;
 
 
     pthread_t *threads = (pthread_t* )malloc(thread_count * sizeof(pthread_t));
+    pthread_t extra;
+
+    struct ImageArgs *avoid_race;
 
     for (int i = 0; i < thread_count; i++){
-
-        printf("Spawning thread %d\n", i);
-        pthread_create(&threads[i], NULL, convolute_loop, (void*)&void_args);
-        printf("--------- After pthread_create ---------\n");
+        avoid_race = (struct ImageArgs*) malloc(sizeof(struct ImageArgs));
+        memcpy(avoid_race, void_args, sizeof(struct ImageArgs));
+        printf("Spawning thread %d local_start: %d local_end %d\n", i,void_args->local_start, void_args->local_end);
+        pthread_create(&threads[i], NULL, convolute_loop, (void*)avoid_race);
+        //printf("--------- After pthread_create ---------\n");
+        printf("void_args->local_end = %d\n", void_args->local_end + rows_per_thread);
         void_args->local_end = void_args->local_end + rows_per_thread;
+        printf("void_args->local_start = %d\n", void_args->local_start + rows_per_thread);
         void_args->local_start = void_args->local_start + rows_per_thread;
+        
+    }
+
+    if (leftover > 0){
+        printf("Reached here\n");
+        printf("void_args->local_start = %d\n", void_args->local_start + leftover);
+        void_args->local_start = void_args->local_start + leftover;
+        printf("void_args->local_end = %d\n", void_args->local_end + leftover);
+        void_args->local_end = void_args->local_end + leftover;
+        printf("Spawning extra thread to handle the last %d rows\n", leftover);
+        //pthread_create(&extra, NULL, convolute_loop, (void*)void_args); 
+
     }
 
     printf("Joining threads\n");
@@ -118,6 +138,9 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
 
         pthread_join(threads[k], NULL);
 
+    }
+    if (leftover > 0){
+        pthread_join(extra, NULL);
     }
     printf("Freeing threads\n");
     free(threads);
@@ -139,7 +162,7 @@ void* convolute_loop(void* img_args){
 
     /* Need to split up the work among each thread */    
 
-    printf("After Thread Launch\n");
+    //printf("After Thread Launch\n");
 
     int local_start = args->local_start;
     int local_end = args->local_end;
@@ -152,7 +175,7 @@ void* convolute_loop(void* img_args){
                 //printf("bit= %d row= %d pix= %d\n", bit, row, pix);
                 //printf("Working on pixel\n");
 
-                args->destImage->data[Index(pix,row,imgPix,bit,imgBit)]=getPixelValue(args->srcImage,pix,row,bit,args->algorithm);
+                args->destImage->data[Index(pix,row,imgPix,bit,imgBit)]=getPixelValue(args->srcImage,pix,row,bit,algorithms[type]);
             }
         }
     }
@@ -191,7 +214,7 @@ int main(int argc,char** argv){
     if (!strcmp(argv[1],"pic4.jpg")&&!strcmp(argv[2],"gauss")){
         printf("You have applied a gaussian filter to Gauss which has caused a tear in the time-space continum.\n");
     }
-    enum KernelTypes type=GetKernelType(argv[2]);
+    type=GetKernelType(argv[2]);
 
     Image srcImage,destImage,bwImage;   
     srcImage.data=stbi_load(fileName,&srcImage.width,&srcImage.height,&srcImage.bpp,0);
