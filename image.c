@@ -91,7 +91,6 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
     int thread_count = 50;
     printf("total threads = %d\n", thread_count);
     int rows_per_thread = srcImage->height / thread_count;
-    int leftover = srcImage->height % thread_count;
     //printf("rows_per_thread = %d, leftover = %d\n", rows_per_thread, leftover);
     //printf("----------------------------------\n");
 
@@ -99,9 +98,10 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
     struct ImageArgs *void_args = (struct ImageArgs*) malloc(sizeof(struct ImageArgs));
     void_args->srcImage = srcImage;
     void_args->destImage = destImage;
-    //void_args->algorithm = (&algorithm);
-    void_args->local_start = 0;
-    void_args->local_end = void_args->local_start + rows_per_thread;
+    void_args->total_threads = thread_count;
+    void_args->rank = 0;
+    //void_args->local_start = 0;
+    //void_args->local_end = void_args->local_start + rows_per_thread;
 
 
     pthread_t *threads = (pthread_t* )malloc(thread_count * sizeof(pthread_t));
@@ -110,19 +110,17 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
     struct ImageArgs *avoid_race;
 
     for (int i = 0; i < thread_count; i++){
+        void_args->rank = i;
         avoid_race = (struct ImageArgs*) malloc(sizeof(struct ImageArgs));
         memcpy(avoid_race, void_args, sizeof(struct ImageArgs));
-        printf("Spawning thread %d local_start: %d local_end %d\n", i,void_args->local_start, void_args->local_end);
+        //printf("Spawning thread %d local_start: %d local_end %d\n", i,void_args->local_start, void_args->local_end);
+        //printf("Spawning thread %d local_start: %d local_end: %d\n", i, i * rows_per_thread, (i+1) * rows_per_thread);
         pthread_create(&threads[i], NULL, convolute_loop, (void*)avoid_race);
-        //printf("--------- After pthread_create ---------\n");
-        printf("void_args->local_end = %d\n", void_args->local_end + rows_per_thread);
-        void_args->local_end = void_args->local_end + rows_per_thread;
-        printf("void_args->local_start = %d\n", void_args->local_start + rows_per_thread);
-        void_args->local_start = void_args->local_start + rows_per_thread;
+
         
     }
 
-    if (leftover > 0){
+    /*if (leftover > 0){
         printf("Reached here\n");
         printf("void_args->local_start = %d\n", void_args->local_start + leftover);
         void_args->local_start = void_args->local_start + leftover;
@@ -131,7 +129,7 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
         printf("Spawning extra thread to handle the last %d rows\n", leftover);
         //pthread_create(&extra, NULL, convolute_loop, (void*)void_args); 
 
-    }
+    }*/
 
     printf("Joining threads\n");
     for (int k = 0; k < thread_count; k++){
@@ -139,22 +137,22 @@ void convolute_bak(Image* srcImage,Image* destImage,Matrix algorithm){
         pthread_join(threads[k], NULL);
 
     }
-    if (leftover > 0){
+    /*if (leftover > 0){
         pthread_join(extra, NULL);
     }
     printf("Freeing threads\n");
-    free(threads);
+    free(threads);*/
 }
 
 
 void* convolute_loop(void* img_args){
 
-    int row,pix,bit,span;
+    int row,pix,bit;//span;
 
     struct ImageArgs *args;
     args = (struct ImageArgs*) img_args;
 
-    span=args->srcImage->bpp*args->srcImage->bpp;
+    //span=args->srcImage->bpp*args->srcImage->bpp;
 
     int imgR = args->srcImage->height;
     int imgPix = args->srcImage->width;
@@ -164,10 +162,25 @@ void* convolute_loop(void* img_args){
 
     //printf("After Thread Launch\n");
 
-    int local_start = args->local_start;
-    int local_end = args->local_end;
+    int rows_per_thread = imgR / args->total_threads; 
+    int leftover = args->srcImage->height % args->total_threads;
+    int local_start;
+    int local_end;
 
-    printf("local_start=%d local_end=%d (exclusive)\n", local_start, local_end);
+    local_start = (args->rank * rows_per_thread); 
+    if (args->rank == args->total_threads-1){
+        printf("INSIDE CONDITION %d * %d + %d\n", args->rank+1, rows_per_thread, leftover);
+        local_end = args->srcImage->height;
+        printf("###########################################\n");
+        printf("Setting last to %d\n", local_end);
+        printf("###########################################\n");
+    }
+    else {
+        local_end = (args->rank+1) * rows_per_thread;       
+    }
+
+    //printf("AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHhh\n");
+    printf("thread: %d local_start=%d local_end=%d (exclusive)\n", args->rank, local_start, local_end);
     for (row=local_start;row<local_end;row++){
         //printf("Row = %d\n", row);
         for (pix=0;pix<imgPix;pix++){
